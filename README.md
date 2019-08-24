@@ -11,6 +11,8 @@ Spring Boot、Gradle、Junit 5、Rest Assured
 |生成IntelliJ工程|`./idea.sh`|自动打开IntelliJ|
 |本地运行|`./run.sh`|访问`http://localhost:8080/about`，监听5005调试端口|
 |本地构建|`./local-build.sh`|本地构建|
+|运行Gatling|`./gradlew gR`|
+|运行wrk|`./wrk-run.sh`|
 
 # Swagger
 - 访问`http://localhost:8080/swagger-ui.html`

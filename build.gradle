@@ -10,8 +10,15 @@ buildscript {
 plugins {
     id 'application'
     id "org.springframework.boot" version "2.1.4.RELEASE"
+    id "com.github.lkishalmi.gatling" version "3.0.2"
+    id 'scala'
+
 //    id "io.spring.dependency-management" version "1.0.6.RELEASE"
 }
+
+
+ext['netty.version'] = '4.0.51.Final'
+
 
 repositories {
     maven { url "https://maven.aliyun.com/repository/central" }
@@ -29,6 +36,8 @@ targetCompatibility = 1.8
 dependencies {
 
     implementation platform('org.springframework.boot:spring-boot-dependencies:2.1.4.RELEASE')
+
+    compile 'org.scala-lang:scala-library:2.13.0'
 
     //spring dependencies
     implementation('org.springframework.boot:spring-boot-starter-web')
