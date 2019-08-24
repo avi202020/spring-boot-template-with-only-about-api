@@ -1,5 +1,5 @@
 # 项目简介
-Spring boot 项目模板，不包含数据库，只有一个About API，可用于以下POC项目的基座。
+Spring boot 项目模板，不包含数据库，只有一个About API，可用于一些POC项目的基座。
 
 # 技术选型
 Spring Boot、Gradle、Junit 5、Rest Assured
