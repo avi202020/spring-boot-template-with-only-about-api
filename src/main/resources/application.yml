@@ -1,0 +1,2 @@
+spring.profiles.active: local # default profile
+management.endpoints.web.exposure.include: "*"

@@ -1,0 +1,7 @@
+buildNumber: ${buildNumber}
+buildTime: ${buildTime}
+gitRevision: ${gitRevision}
+gitBranch: ${gitBranch}
+
+logging:
+  file: /var/log/ecommerce-order-backend/order-dev.log
