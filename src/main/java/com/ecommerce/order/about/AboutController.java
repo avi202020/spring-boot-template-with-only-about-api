@@ -57,30 +57,35 @@ public class AboutController {
         String buildTime = environment.getProperty("buildTime");
         String gitRevision = environment.getProperty("gitRevision");
         String gitBranch = environment.getProperty("gitBranch");
-
-        CompletableFuture<String> dd = dd();
-        String stringStringConsumerRecord = dd.get();
-        log.info("------" + stringStringConsumerRecord);
+        CompletableFuture completableFuture = new CompletableFuture();
+         dd(completableFuture);
+        Object o = completableFuture.get();
+        log.info("------" + o);
 
         String activeProfiles = Arrays.toString(environment.getActiveProfiles());
         String deployTime = this.deployTime.toString();
         return new AboutRepresentation(buildNumber, buildTime, deployTime, gitRevision, gitBranch, activeProfiles);
     }
 
-    private CompletableFuture<String> dd() {
-        ConsumerRecords<String, String> records = consumer.poll(100);
-        for (ConsumerRecord<String, String> record : records) {
-            Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
-            try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
-                return CompletableFuture.completedFuture("hello");
-            } catch (Throwable t) {
-                span.tag("error", t.getMessage());
-                throw t;
-            } finally {
-                span.finish();
+    private void dd(CompletableFuture completableFuture) {
+        taskExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                ConsumerRecords<String, String> records = consumer.poll(100);
+                for (ConsumerRecord<String, String> record : records) {
+                    Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
+                    try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
+                        completableFuture.complete("hello");
+                    } catch (Throwable t) {
+                        span.tag("error", t.getMessage());
+                        throw t;
+                    } finally {
+                        span.finish();
+                    }
+                }
             }
-        }
-        return null;
+        });
+
     }
 
 }
