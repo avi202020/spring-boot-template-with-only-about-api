@@ -19,11 +19,14 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @RestController
 @RequestMapping(value = "/about")
 public class AboutController {
+    private final ExecutorService exd;
     //now
     private ZonedDateTime deployTime = ZonedDateTime.now();
 
@@ -47,6 +50,8 @@ public class AboutController {
         this.taskExecutor = taskExecutor;
         this.kafkaTracing = kafkaTracing;
         this.tracer = tracer;
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        this.exd = executorService;
     }
 
     @GetMapping
@@ -58,7 +63,7 @@ public class AboutController {
         String gitRevision = environment.getProperty("gitRevision");
         String gitBranch = environment.getProperty("gitBranch");
         CompletableFuture completableFuture = new CompletableFuture();
-         dd(completableFuture);
+        dd(completableFuture);
         Object o = completableFuture.get();
         log.info("------" + o);
 
@@ -68,23 +73,24 @@ public class AboutController {
     }
 
     private void dd(CompletableFuture completableFuture) {
-        taskExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                ConsumerRecords<String, String> records = consumer.poll(100);
-                for (ConsumerRecord<String, String> record : records) {
-                    Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
-                    try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
-                        completableFuture.complete("hello");
-                    } catch (Throwable t) {
-                        span.tag("error", t.getMessage());
-                        throw t;
-                    } finally {
-                        span.finish();
+        exd.submit(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        ConsumerRecords<String, String> records = consumer.poll(100);
+                        for (ConsumerRecord<String, String> record : records) {
+                            Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
+                            try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
+                                completableFuture.complete("hello");
+                            } catch (Throwable t) {
+                                span.tag("error", t.getMessage());
+                                throw t;
+                            } finally {
+                                span.finish();
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
 
     }
 
