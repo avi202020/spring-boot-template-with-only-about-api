@@ -14,6 +14,7 @@ Spring Boot、Gradle、Junit 5、Rest Assured
 |运行Gatling|`./gatling-run.sh`|
 |运行wrk|`./wrk-run.sh`|
 |运行k6|`./k6-run.sh`|
+|启动zipkin|`./zipkin-run.sh`|访问`http://localhost:9411`|
 
 # Swagger
 - 访问`http://localhost:8080/swagger-ui.html`

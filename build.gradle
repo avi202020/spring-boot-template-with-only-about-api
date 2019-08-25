@@ -36,6 +36,11 @@ targetCompatibility = 1.8
 dependencies {
 
     implementation platform('org.springframework.boot:spring-boot-dependencies:2.1.4.RELEASE')
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:Finchley.RELEASE")
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:Finchley.RELEASE")
+
+    implementation "org.springframework.cloud:spring-cloud-starter-sleuth"
+    implementation "org.springframework.cloud:spring-cloud-starter-zipkin"
 
     compile 'org.scala-lang:scala-library:2.13.0'
 
