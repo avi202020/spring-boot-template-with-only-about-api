@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @RestController
@@ -48,7 +50,7 @@ public class AboutController {
     }
 
     @GetMapping
-    public AboutRepresentation about() {
+    public AboutRepresentation about() throws ExecutionException, InterruptedException {
         producer.send(new ProducerRecord<String, String>("mytopic", "hello"));
         log.info("About api accessed.");
         String buildNumber = environment.getProperty("buildNumber");
@@ -56,11 +58,21 @@ public class AboutController {
         String gitRevision = environment.getProperty("gitRevision");
         String gitBranch = environment.getProperty("gitBranch");
 
+        CompletableFuture<String> dd = dd();
+        String stringStringConsumerRecord = dd.get();
+        log.info("------" + stringStringConsumerRecord);
+
+        String activeProfiles = Arrays.toString(environment.getActiveProfiles());
+        String deployTime = this.deployTime.toString();
+        return new AboutRepresentation(buildNumber, buildTime, deployTime, gitRevision, gitBranch, activeProfiles);
+    }
+
+    private CompletableFuture<String> dd() {
         ConsumerRecords<String, String> records = consumer.poll(100);
         for (ConsumerRecord<String, String> record : records) {
             Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
             try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
-                log.info("=====");
+                return CompletableFuture.completedFuture("hello");
             } catch (Throwable t) {
                 span.tag("error", t.getMessage());
                 throw t;
@@ -68,10 +80,7 @@ public class AboutController {
                 span.finish();
             }
         }
-
-        String activeProfiles = Arrays.toString(environment.getActiveProfiles());
-        String deployTime = this.deployTime.toString();
-        return new AboutRepresentation(buildNumber, buildTime, deployTime, gitRevision, gitBranch, activeProfiles);
+        return null;
     }
 
 }
