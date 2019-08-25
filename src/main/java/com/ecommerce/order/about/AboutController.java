@@ -1,7 +1,16 @@
 package com.ecommerce.order.about;
 
+import brave.Span;
+import brave.Tracer;
+import brave.kafka.clients.KafkaTracing;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,17 +27,47 @@ public class AboutController {
 
     private Environment environment;
 
-    public AboutController(Environment environment) {
+
+    private Consumer consumer;
+    private Producer producer;
+
+    private TaskExecutor taskExecutor;
+
+    private KafkaTracing kafkaTracing;
+
+    private Tracer tracer;
+
+
+    public AboutController(Environment environment, Consumer consumer, Producer producer, TaskExecutor taskExecutor, KafkaTracing kafkaTracing, Tracer tracer) {
         this.environment = environment;
+        this.consumer = consumer;
+        this.producer = producer;
+        this.taskExecutor = taskExecutor;
+        this.kafkaTracing = kafkaTracing;
+        this.tracer = tracer;
     }
 
     @GetMapping
     public AboutRepresentation about() {
+        producer.send(new ProducerRecord<String, String>("mytopic", "hello"));
         log.info("About api accessed.");
         String buildNumber = environment.getProperty("buildNumber");
         String buildTime = environment.getProperty("buildTime");
         String gitRevision = environment.getProperty("gitRevision");
         String gitBranch = environment.getProperty("gitBranch");
+
+        ConsumerRecords<String, String> records = consumer.poll(100);
+        for (ConsumerRecord<String, String> record : records) {
+            Span span = kafkaTracing.nextSpan((ConsumerRecord<?, ?>) record).name("on-message11").start();
+            try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
+                log.info("=====");
+            } catch (Throwable t) {
+                span.tag("error", t.getMessage());
+                throw t;
+            } finally {
+                span.finish();
+            }
+        }
 
         String activeProfiles = Arrays.toString(environment.getActiveProfiles());
         String deployTime = this.deployTime.toString();
